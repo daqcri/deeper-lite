@@ -5,7 +5,12 @@ Entity Resolution in databases
 
 First install [Docker](https://www.docker.com/), then:
 
-    docker run -it -v /path/to/datasets/root/directory:/data daqcri/deeper-lite <Dataset> <first-table> <second-table> <perfect-mappings-file>
+    docker run -it -v /path/to/datasets/root/directory:/root/data daqcri/deeper-lite <Dataset> <first-table> <second-table> <perfect-mappings-file>
+
+Example:
+
+    docker run -it -v /home/me/Code/DeepER-Lite/data:/root/data deeper-lite fodors-zagats fodors.csv zagats.csv fodors-zagats_perfectMapping.csv
+
 
 ## Development
 
