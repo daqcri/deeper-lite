@@ -13,4 +13,4 @@ COPY / /root/
 
 RUN ./install.sh
 
-CMD ["/root/run.sh"]
+ENTRYPOINT ["/root/run.sh"]
