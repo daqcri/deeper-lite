@@ -1,16 +1,12 @@
 # DeepER-Lite
 Entity Resolution in databases
 
-Installation:
+## Installation
 
-sh install-Ubuntu.sh
+First install [Docker](https://www.docker.com/), then:
 
-#sh install-Mac.sh  #mac users need to update their Xcode to 8.3.3 from the App Store.
+    docker build .
+    
+## Running
 
-Running:
-
-sh RunFZ.sh #1-A products dataset: Amazon-GoogleProducts
-
-sh RunAG.sh #2-A restaurants dataset: fodors-zagats
-# deeper-lite
-# deeper-lite
+    docker run -it <image> -v /path/to/datasets/root/directory:/data <Dataset> <first-table> <second-table> <perfect-mappings-file>
