@@ -1,12 +1,14 @@
 # DeepER-Lite
 Entity Resolution in databases
 
-## Installation
+## Running
 
 First install [Docker](https://www.docker.com/), then:
 
-    docker build .
-    
-## Running
+    docker run -it -v /path/to/datasets/root/directory:/data daqcri/deeper-lite <Dataset> <first-table> <second-table> <perfect-mappings-file>
 
-    docker run -it <image> -v /path/to/datasets/root/directory:/data <Dataset> <first-table> <second-table> <perfect-mappings-file>
+## Development
+
+Edit source files then build a new image:
+
+    docker build .
