@@ -1,5 +1,6 @@
 #!/bin/bash
 set -e
+. /root/torch/install/bin/torch-activate
 #Path Params: Edit these for your dataset please
 #to train this model, you need 3 files, The first table, the second table and the perfect mapping
 DATA_DIR=$PWD/data
