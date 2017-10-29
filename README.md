@@ -9,9 +9,11 @@ First install [Docker](https://www.docker.com/), then:
 
 Examples:
 Example 1: mount your data, here at /home/me/Code/DeepER-Lite/data
+
     docker run -it -v /home/me/Code/DeepER-Lite/data:/root/data deeper-lite fodors-zagats fodors.csv zagats.csv fodors-zagats_perfectMapping.csv
 
 Example 2: use the samples included with the build
+
     docker run -it deeper-lite fodors-zagats fodors.csv zagats.csv fodors-zagats_perfectMapping.csv
 
 ## Development
