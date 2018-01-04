@@ -1,11 +1,11 @@
 #!/bin/bash
 set -e
-. /root/torch/install/bin/torch-activate
+# . /root/torch/install/bin/torch-activate
 #Path Params: Edit these for your dataset please
 #to train this model, you need 3 files, The first table, the second table and the perfect mapping
 DATA_DIR=$PWD/data
-if [ $# -lt 4 ]; then
-	echo "USAGE $0 <Dataset> <first-table> <second-table> <perfect-mappings-file>"
+if [ $# -lt 6 ]; then
+	echo "USAGE $0 <Dataset> <first-table> <second-table> <perfect-mappings-file> <num_table_fields> <cosine_neg_threshold>"
 	echo "Dataset should be relative to data directory"
 	exit 1
 fi
@@ -13,7 +13,8 @@ DATA_SET="$1"
 FIRST_TABLE_FILE=$DATA_DIR/$DATA_SET/$2
 SECOND_TABLE_FILE=$DATA_DIR/$DATA_SET/$3
 PERFECT_MAPPING_FILE=$DATA_DIR/$DATA_SET/$4
-
+NUM_TABLE_FIELDS=$5			#how many columns/fields your tables have
+COSINE_NEG_THRESHOLD=$6
 #these are defaults, you may leave them in peace
 NEGATIVE_MAPPING_FILE=$DATA_DIR/$DATA_SET/$DATA_SET'_negativeMapping.csv'
 PERFECT_MAPPING_TRAIN_FILE=$DATA_DIR/$DATA_SET/$DATA_SET'_perfectMappingTraining.csv'
@@ -29,19 +30,17 @@ mkdir -p $OUTOUT_DIR
 SEED=11
 SAMPLE=yes
 NEGATIVE_RATIO_TYPE_1=20 	#where first part of sampled negative pair is part of a perfect pair
-NEGATIVE_RATIO_TYPE_2=20 	#where second part of sampled negative pair is part of a perfect pair
+NEGATIVE_RATIO_TYPE_2=20	#where second part of sampled negative pair is part of a perfect pair
 NEGATIVE_RATIO_TYPE_3=20 	#where neither part of sampled negative pair is part of a perfect pair
-TRAIN_RATIO=0.8
+TRAIN_RATIO=0.1
 DEV_RATIO=0.1
-TEST_RATIO=0.1
-NEGATIVE_TRAIN_KEEP_RATIO=0.1 #do you really need all those negatives in training
+TEST_RATIO=0.8
+NEGATIVE_TRAIN_KEEP_RATIO=1 #do you really need all those negatives in training
 
 #Training Params
 THREADS=1 					#cpu threads, DeepER-Lite is all done on cpus
-NUM_TABLE_FIELDS=4 			#how many columns/fields your tables have
 NOISE_DATA=no 				#nosie training data to test model robustness
 NOISE_RATIO=0 				#how much noise [0 - 1]
-COSINE_NEG_THRESHOLD=0.3  	#[below this drop sampled negatives negatives]
 OP_MODE=train_test 			#[train_test | test]
 RECOMPUTE_FEATURES=yes 		#after the first run features are saved, you are welcome to recompute them though
 PLOT=no					#plot training and dev accuracies during training
@@ -96,6 +95,7 @@ th DeepER-Lite.lua 	-positivePairsTrainingFile $PERFECT_MAPPING_TRAIN_FILE \
 				  	-debug_file_path $OUTOUT_DIR/debug.txt \
 				  	-test_predictions_file_path $OUTOUT_DIR/test_predictions.txt \
 				  	-perf_file_path $OUTOUT_DIR/perf.txt \
+				  	-threshold_file_path $OUTOUT_DIR/threshold.txt \
 				  	-firstDataFile $FIRST_TABLE_FILE \
 				  	-secondDataFile $SECOND_TABLE_FILE \
 				  	-numTableFields $NUM_TABLE_FIELDS \
