@@ -2,7 +2,7 @@
 set -e
 (
 cd torch
-./install-deps
+TORCH_LUA_VERSION=LUA52 ./install.sh
 ./install.sh
 . /root/torch/install/bin/torch-activate
 luarocks install csvigo
