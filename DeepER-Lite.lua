@@ -106,34 +106,66 @@ end
 
 local function print_stats(negativeTrainingTensor,positiveTrainingTensor,negativeTestingTensor,positiveTestingTensor)
   --========== Neg Train Metric ========================
-  negTrainTensorSize = negativeTrainingTensor:size()
-  negTrainMetric = torch.Tensor(negTrainTensorSize[1])
-  for i = 1,negTrainTensorSize[1] do
-    negTrainMetric[i] = negativeTrainingTensor[{{i},{1,4}}]:mean()
+  negTrainingTensorSize = negativeTrainingTensor:size()
+  negTrainingMetric = torch.Tensor(negTrainingTensorSize[1])
+  for i = 1,negTrainingTensorSize[1] do
+    negTrainingMetric[i] = negativeTrainingTensor[{{i},{1,4}}]:mean()
   end
-  print('\nCosine Train Negative Min')
-  print(negTrainMetric:min())
-  print('\nCosine Train Negative Mean')
-  print(negTrainMetric:mean())
-  print('\nCosine Train Negative Max')
-  print(negTrainMetric:max())
-  print('\nCosine Train Negative Median')
-  print(negTrainMetric:median(1)[1])
+  print('\n ====== Training Stats ====== \n')
+  print('\nCosine Training Negative Min')
+  print(negTrainingMetric:min())
+  print('\nCosine Training Negative Mean')
+  print(negTrainingMetric:mean())
+  print('\nCosine Training Negative Max')
+  print(negTrainingMetric:max())
+  print('\nCosine Training Negative Median')
+  print(negTrainingMetric:median(1)[1])
 
-  --========== Pos Train Metric ========================
-  posTrainTensorSize = positiveTrainingTensor:size()
-  posTrainMetric = torch.Tensor(posTrainTensorSize[1])
-  for i = 1,posTrainTensorSize[1] do
-    posTrainMetric[i] = positiveTrainingTensor[{{i},{1,4}}]:mean()
+  posTrainingTensorSize = positiveTrainingTensor:size()
+  posTrainingMetric = torch.Tensor(posTrainingTensorSize[1])
+  for i = 1,posTrainingTensorSize[1] do
+    posTrainingMetric[i] = positiveTrainingTensor[{{i},{1,4}}]:mean()
   end
-  print('\nCosine Train Positive Min')
-  print(posTrainMetric:min())
-  print('\nCosine Train Positive Mean')
-  print(posTrainMetric:mean())
-  print('\nCosine Train Positive Max')
-  print(posTrainMetric:max())
-  print('\nCosine Train Positive Median')
-  print(posTrainMetric:median(1)[1])
+  print('\n\nCosine Training Positive Min')
+  print(posTrainingMetric:min())
+  print('\nCosine Training Positive Mean')
+  print(posTrainingMetric:mean())
+  print('\nCosine Training Positive Max')
+  print(posTrainingMetric:max())
+  print('\nCosine Training Positive Median')
+  print(posTrainingMetric:median(1)[1])
+  print('\n\n\n')
+
+
+  negTestingTensorSize = negativeTestingTensor:size()
+  negTestingMetric = torch.Tensor(negTestingTensorSize[1])
+  for i = 1,negTestingTensorSize[1] do
+    negTestingMetric[i] = negativeTestingTensor[{{i},{1,4}}]:mean()
+  end
+
+  print('\n\n\n ====== Testing Stats ====== \n')
+  print('\nCosine Testing Negative Min')
+  print(negTestingMetric:min())
+  print('\nCosine Testing Negative Mean')
+  print(negTestingMetric:mean())
+  print('\nCosine Testing Negative Max')
+  print(negTestingMetric:max())
+  print('\nCosine Testing Negative Median')
+  print(negTestingMetric:median(1)[1])
+
+  posTestingTensorSize = positiveTestingTensor:size()
+  posTestingMetric = torch.Tensor(posTestingTensorSize[1])
+  for i = 1,posTestingTensorSize[1] do
+    posTestingMetric[i] = positiveTestingTensor[{{i},{1,4}}]:mean()
+  end
+  print('\n\nCosine Testing Positive Min')
+  print(posTestingMetric:min())
+  print('\nCosine Testing Positive Mean')
+  print(posTestingMetric:mean())
+  print('\nCosine Testing Positive Max')
+  print(posTestingMetric:max())
+  print('\nCosine Testing Positive Median')
+  print(posTestingMetric:median(1)[1])
 
 
 end
@@ -383,7 +415,6 @@ if opt.computeFeatures == 'yes' then --   not paths.filep(opt.positivePairsTrain
  
   print("Computing Features took: " .. t)
   print_stats(negativeTrainingTensorFull, positiveTrainingTensor, negativeTestingTensorFull, positiveTestingTensor)
-
 
   sys.tic()
   torch.save(opt.positivePairsTrainingFileBin, positiveTrainingTensor)
