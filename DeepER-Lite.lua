@@ -36,6 +36,7 @@ cmd:option('-testMapFileBin','' , 'Index to Id Map for Test Data')
 cmd:option('-debug_file_path','' , 'false positives and false negatives')
 cmd:option('-test_predictions_file_path','' , 'path to test predictions file')
 cmd:option('-perf_file_path','' , 'false positives and false negatives')
+cmd:option('-threshold_file_path','' , 'save path to the negative drop threshold')
 
 
 
@@ -65,7 +66,7 @@ cmd:option('-batchSize', 0, 'mini-batch size (1 = pure stochastic)')
 cmd:option('-weightDecay', 0, 'weight decay (SGD only)')
 cmd:option('-momentum', 0, 'momentum (SGD only)')
 cmd:option('-maxIter', 0, 'maximum nb of iterations for CG and LBFGS')
-cmd:option('-type', '', 'type: double | float | cuda')
+cmd:option('-type', 'float', 'type: double | float | cuda')
 cmd:option('-minfreq', 0, 'minimum freq of a word in a corpus to be considered')
 cmd:option('-percent_train', 0, 'percentage of training data to be used')
 cmd:option('-simMeasure', '', 'cosineDiff | diff | cosineDiff')
@@ -135,32 +136,6 @@ local function print_stats(negativeTrainingTensor,positiveTrainingTensor,negativ
   print(posTrainMetric:median(1)[1])
 
 
-
---  --========== Neg Test Metric ========================
---  negTestTensorSize = negativeTestingTensor:size()
---  negTestMetric = torch.Tensor(negTestTensorSize[1])
---  for i = 1,negTestTensorSize[1] do
---    negTestMetric[i] = negativeTestingTensor[{{i},{1,4}}]:mean()
---  end
---  print('\nCosine Test Negative Min')
---  print(negTestMetric:min())
---  print('\nCosine Test Negative Mean')
---  print(negTestMetric:mean())
---  print('\nCosine Test Negative Max')
---  print(negTestMetric:max())
---
---  posTestTensorSize = positiveTestingTensor:size()
---  posTestMetric = torch.Tensor(posTestTensorSize[1])
---  for i = 1,posTestTensorSize[1] do
---    posTestMetric[i] = positiveTestingTensor[{{i},{1,4}}]:mean()
---  end
---
---  print('\nCosine Test Positive Min')
---  print(posTestMetric:min())
---  print('\nCosine Test Positive Mean')
---  print(posTestMetric:mean())
---  print('\nCosine Test Positive Max')
---  print(posTestMetric:max())
 end
 
 local function FillDataTable(pairsTable, firstTable, secondTable, indextoIdTable, indextoIdTableCounter)
@@ -360,11 +335,10 @@ if opt.computeFeatures == 'yes' then --   not paths.filep(opt.positivePairsTrain
       negativeTrainingTensor[negativeCounter] = negativeTrainingTensorFull[i]
     end
   end
-  print(negativeTrainingTensorFull:size()[1])
-  print(negativeTrainingTensor:size()[1])
-  print(positiveTrainingTensor:size()[1])
+  print("negativeTrainingTensorFull:size(): " .. negativeTrainingTensorFull:size()[1])
+  print("negativeTrainingTensor:size(): " .. negativeTrainingTensor:size()[1])
+  print("positiveTrainingTensor:size(): " .. positiveTrainingTensor:size()[1])
   print('\n')
-
 
 
   positiveDevTensor = ExtractFeatures(positivePairsDevTable,-1,0)
@@ -378,9 +352,9 @@ if opt.computeFeatures == 'yes' then --   not paths.filep(opt.positivePairsTrain
     end
   end
   print('\n')
-  print(negativeDevTensorFull:size()[1])
-  print(negativeDevTensor:size()[1])
-  print(positiveDevTensor:size()[1])
+  print("negativeDevTensorFull:size(): " .. negativeDevTensorFull:size()[1])
+  print("negativeDevTensor:size(): " .. negativeDevTensor:size()[1])
+  print("positiveDevTensor:size(): " .. positiveDevTensor:size()[1])
   print('\n')
 
   positiveTestingTensor = ExtractFeatures(positivePairsTestingTable,-1,0)
@@ -393,9 +367,9 @@ if opt.computeFeatures == 'yes' then --   not paths.filep(opt.positivePairsTrain
       negativeTestingTensor[negativeCounter] = negativeTestingTensorFull[i]
     end
   end
-  print(negativeTestingTensorFull:size()[1])
-  print(negativeTestingTensor:size()[1])
-  print(positiveTestingTensor:size()[1])
+  print("negativeTestingTensorFull:size(): " .. negativeTestingTensorFull:size()[1])
+  print("negativeTestingTensor:size(): " .. negativeTestingTensor:size()[1])
+  print("positiveTestingTensor:size(): " .. positiveTestingTensor:size()[1])
   print('\n')
 
   negativeSamplingReductionRatio = negativeTestingTensorFull:size()[1] / negativeTestingTensor:size()[1]
@@ -725,7 +699,7 @@ local function evaluate(data, model, is_dev)
       parameters:copy(average)
    end
    model:evaluate()
-   print('==> testing on test set:')
+   print('==> evaluating model:')
    for t = 1,data:size() do
       xlua.progress(t, data:size())
       local input = data.data[t]
@@ -821,6 +795,7 @@ confusion:zero()
 if opt.opMode == 'test' then
   best_dev_model = torch.load(best_dev_model_file_path)
 end
+print('\n\nUsing best dev model on test set:\n\n')
 local test_p, test_r, test_f1, test_confusion = evaluate(testData, best_dev_model, false)
  
 -- negativeSamplingReductionRatio = negativeTestingTensorFull:size()[1] / negativeTestingTensor:size()[1]
@@ -843,6 +818,12 @@ perf_file:writeString('Test Confusion: \n')
 perf_file:writeString(test_confusion[{1,1}] .. '    ' .. test_confusion[{1,2}] .. '\n')
 perf_file:writeString(test_confusion[{2,1}] .. '    ' .. test_confusion[{2,2}] .. '\n')
 perf_file:close()
+
+
+local threshold_file = torch.DiskFile(opt.threshold_file_path, 'w')
+print(opt.threshold)
+threshold_file:writeFloat(opt.threshold)
+threshold_file:close()
 
 
 for k,v in ipairs(test_predictions) do
