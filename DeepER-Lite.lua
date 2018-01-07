@@ -171,8 +171,10 @@ local function print_stats(negativeTrainingTensor,positiveTrainingTensor,negativ
 end
 
 local function FillDataTable(pairsTable, firstTable, secondTable, indextoIdTable, indextoIdTableCounter)
+  
   local pairsDataTable = {}
   for i=1, #pairsTable do
+    xlua.progress(i,#pairsTable)
     local pairFirstData = firstTable[pairsTable[i][1]]
     local pairSecondData = secondTable[pairsTable[i][2]]
     pairsDataTable[i] = {pairFirstData, pairSecondData}
@@ -203,6 +205,7 @@ local function ExtractFeatures(dataTable, negativeSamplingThreshold, emtpyCosine
   local included = torch.Tensor(dataTensor:size()[1])
   local numIncluded = 0
   for i = 1, #dataTable do
+    xlua.progress(i,#dataTable)
     for j=1, opt.numTableFields do
       firstFeaturesTensor:zero()
       secondFeaturesTensor:zero()
@@ -342,6 +345,7 @@ if opt.computeFeatures == 'yes' then --   not paths.filep(opt.positivePairsTrain
   print("Computing Features ... ")
   sys.tic()
   
+  print('Filling Data Tables ...')
 
   local positivePairsTrainingTable = FillDataTable(positivePairsTraining, firstDataTable, secondDataTable)
   local negativePairsTrainingTable = FillDataTable(negativePairsTraining, firstDataTable, secondDataTable)
@@ -356,6 +360,8 @@ if opt.computeFeatures == 'yes' then --   not paths.filep(opt.positivePairsTrain
   local includedNegativeTraining = 0
   local includedNegativeDev = 0
   local includedNegativeTesting = 0
+
+  print('Extracting Features from Data Tables ...')
 
   positiveTrainingTensor = ExtractFeatures(positivePairsTrainingTable,-1,0) -- -1 as we never drop positives, 0 as we lightly penalize empty positives
   negativeTrainingTensorFull, negativeTrainingIncluded, numNegativeTrainingIncluded = ExtractFeatures(negativePairsTrainingTable, opt.threshold,-1)
