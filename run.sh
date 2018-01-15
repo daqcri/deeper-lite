@@ -28,10 +28,10 @@ mkdir -p $OUTOUT_DIR
 
 #Sampling Params
 SEED=11
-SAMPLE=yes
-NEGATIVE_RATIO_TYPE_1=20 	#where first part of sampled negative pair is part of a perfect pair
-NEGATIVE_RATIO_TYPE_2=20	#where second part of sampled negative pair is part of a perfect pair
-NEGATIVE_RATIO_TYPE_3=20 	#where neither part of sampled negative pair is part of a perfect pair
+SAMPLE=no
+NEGATIVE_RATIO_TYPE_1=10 	#where first part of sampled negative pair is part of a perfect pair
+NEGATIVE_RATIO_TYPE_2=10	#where second part of sampled negative pair is part of a perfect pair
+NEGATIVE_RATIO_TYPE_3=10	#where neither part of sampled negative pair is part of a perfect pair
 TRAIN_RATIO=0.1
 DEV_RATIO=0.1
 TEST_RATIO=0.8
