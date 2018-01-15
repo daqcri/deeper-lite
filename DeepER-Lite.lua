@@ -80,6 +80,7 @@ cmd:text()
 local opt = cmd:parse(arg or {})
 
 print(opt)
+torch.setdefaulttensortype('torch.FloatTensor')
 
 if opt.type == 'float' then
    print('==> switching to floats')
