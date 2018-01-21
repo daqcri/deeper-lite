@@ -6,7 +6,7 @@ require 'torch'
 require 'nn'
 require 'xlua'
 require 'optim'
-require 'dp'
+--require 'dp'
 
 local total_time = sys.clock()
 
