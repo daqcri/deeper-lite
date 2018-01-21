@@ -71,6 +71,11 @@ end
 local nthread = 8
 local njob = nthread
 
+local function TableLength(T)
+  local count = 0
+  for _ in pairs(T) do count = count + 1 end
+  return count
+end
 
 local function FillDataTable(pairsTable, firstTable, secondTable, indextoIdTable, indextoIdTableCounter)
   local pairsDataTable = {}
@@ -117,7 +122,6 @@ local function ExtractFeatures(dataTable, negativeSamplingThreshold, emtpyCosine
         numWordsInSentences = numWordsInSentences + 1
       end
       firstFeaturesTensor[j]:div(numWordsInSentences)
-
       local sentence2 = dataTable[i][2][j]
       
       
@@ -209,25 +213,26 @@ if opt.computeFeatures == 'yes' then --   not paths.filep(opt.positivePairsTrain
   local firstDataTable = {}
   local secondDataTable = {}
 
-  for i=1,#firstData do
+  for i=2,#firstData do
     local key
     local value = {}
     key = firstData[i][1]
     for j=2,#firstData[i] do
       table.insert(value,firstData[i][j])
     end
-    firstDataTable[key] = value
+    firstDataTable[key] = value  
   end
 
-  for i=1,#secondData do
+  for i=2,#secondData do
     local key
     local value = {}
     key = secondData[i][1]
     for j=2,#secondData[i] do
       table.insert(value,secondData[i][j])
     end
-    secondDataTable[key] = value
+    secondDataTable[key] = value    
   end
+  
   t = sys.toc()    
   print("Data Preprocessing took: " .. t .. " seconds\n")
   
@@ -236,7 +241,7 @@ if opt.computeFeatures == 'yes' then --   not paths.filep(opt.positivePairsTrain
   
 
   print("Memory before FillDataTable: " .. collectgarbage("count")/1000000 .. " GB")
-  local predPairsTable = FillDataTable(allPairs, firstDataTable, secondDataTable,predIndexToTable,1)
+  local predPairsTable = FillDataTable(allPairs, firstDataTable, secondDataTable, predIndexToTable,1)
   firstDataTable = nil
   secondDataTable =nil
   print("Memory after FillDataTable before collect: " .. collectgarbage("count")/1000000 .. " GB")
@@ -265,14 +270,16 @@ if opt.computeFeatures == 'yes' then --   not paths.filep(opt.positivePairsTrain
   sys.tic()
   print("Filtering by cosine threshold: " .. opt.threshold)
   predTensor = torch.Tensor(numIncluded, predTensorFull:size()[2])
+  --reducedPredIndexToTable = {}
   local predCounter = 0
   for i = 1, predTensorFull:size()[1] do
     if included[i] == 1 then
-        predCounter = predCounter + 1
+      predCounter = predCounter + 1
       predTensor[predCounter] = predTensorFull[i]
+      predIndexToTable[predCounter] = predIndexToTable[i]
     end
   end
-  
+  --predIndexToTable = reducedPredIndexToTable
 
   print('size after cosine sim thresholding: ' .. numIncluded)  
   print('size after cosine sim thresholding: (check): ' .. predTensor:size()[1])
@@ -349,6 +356,7 @@ for k,v in ipairs(test_predictions) do
     test_predictions_file:writeString(v[1][1]  .. ','  .. v[1][2] ..'\n')
   end
 end
+
 test_predictions_file:close()
 total_time = sys.clock() - total_time
 print("\n==> Total time = " .. (total_time) .. ' seconds, predicted: ' .. (predData:size()) .. ' pairs\n' )
