@@ -4,7 +4,7 @@ require 'torch'
 require 'nn'
 require 'xlua'
 require 'optim'
-require 'dp'
+--require 'dp'
 
 
 local word2vec = nil
