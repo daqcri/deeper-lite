@@ -420,7 +420,7 @@ if opt.computeFeatures == 'yes' then --   not paths.filep(opt.positivePairsTrain
   local negativeCounter = 0
   for i = 1, negativeTrainingTensorFull:size()[1] do
     if negativeTrainingIncluded[i] == 1 then
-        negativeCounter = negativeCounter + 1
+      negativeCounter = negativeCounter + 1
       negativeTrainingTensor[negativeCounter] = negativeTrainingTensorFull[i]
     end
   end
@@ -433,7 +433,7 @@ if opt.computeFeatures == 'yes' then --   not paths.filep(opt.positivePairsTrain
   negativeCounter = 0
   for i = 1, negativeDevTensorFull:size()[1] do
     if negativeDevIncluded[i] == 1 then
-        negativeCounter = negativeCounter + 1
+      negativeCounter = negativeCounter + 1
       negativeDevTensor[negativeCounter] = negativeDevTensorFull[i]
     end
   end
@@ -449,6 +449,7 @@ if opt.computeFeatures == 'yes' then --   not paths.filep(opt.positivePairsTrain
     if negativeTestingIncluded[i] == 1 then
       negativeCounter = negativeCounter + 1
       negativeTestingTensor[negativeCounter] = negativeTestingTensorFull[i]
+      testIndexToIdTable[negativeCounter] = testIndexToIdTable[i]
     end
   end
   print("negativeTestingTensorFull:size() before cosine cut: " .. negativeTestingTensorFull:size()[1])
