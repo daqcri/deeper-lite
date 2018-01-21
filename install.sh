@@ -1,12 +1,13 @@
 #!/bin/bash
 set -e
 (
-cd torch
-TORCH_LUA_VERSION=LUA52 ./install.sh
+git clone https://github.com/torch/distro.git ~/torch --recursive
+cd ~/torch; bash install-deps;
 ./install.sh
-. /root/torch/install/bin/torch-activate
+. ~/torch/install/bin/torch-activate
 luarocks install csvigo
 luarocks install dp
+luarocks install rnn
 )
 
 #GloVe embeddings
