@@ -36,11 +36,11 @@ mkdir -p $OUTOUT_DIR
 
 #Sampling Params
 SEED=31
-RATIO_NEG_TO_POS_TYPE_1=1  						#e.g. 2 neg examples for each pos example where the table one record of a random pos is part of the tuple
-RATIO_NEG_TO_POS_TYPE_2=1							#e.g. 2 neg examples for each pos example where the table two record of a random pos is part of the tuple
-RATIO_NEG_TO_POS_TYPE_3=1							#e.g. 2 neg examples for each pos example where both records are not part of any pos example
+RATIO_NEG_TO_POS_TYPE_1=20  						#e.g. 2 neg examples for each pos example where the table one record of a random pos is part of the tuple
+RATIO_NEG_TO_POS_TYPE_2=20							#e.g. 2 neg examples for each pos example where the table two record of a random pos is part of the tuple
+RATIO_NEG_TO_POS_TYPE_3=50							#e.g. 2 neg examples for each pos example where both records are not part of any pos example
 
-PERCENT_NEG_TRAIN=0.75				#off all samples negative examples for training, what ratio do you want to keep (class balancing)
+PERCENT_NEG_TRAIN=1				#off all samples negative examples for training, what ratio do you want to keep (class balancing)
 
 TRAIN_RATIO=0.25
 DEV_RATIO=0.25
@@ -57,6 +57,7 @@ LEARNING_RATE_DROP_THRESHOLD=5e-3
 LEARNING_RATE_DROP_CHECK_EPOCHSS=10
 LEARNING_RATE_DROP_RATIO=0.1
 BATCH_SIZE=10
+EMPTY_COSINE_PENALTY=0
 EPOCHS=20
 
 
@@ -142,4 +143,5 @@ th DeepER-Lite.lua 	-positivePairsTrainingFile $PERFECT_MAPPING_TRAIN_FILE \
 					-noiseFlipLabels  $NOISE_DATA \
 					-noiseFlipLabelsRatio $NOISE_RATIO \
 					-threshold $COSINE_NEG_THRESHOLD \
+					-empty_cosine_penalty $EMPTY_COSINE_PENALTY \
 					-opMode $OP_MODE
