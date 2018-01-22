@@ -230,6 +230,16 @@ end
 
 local cosine = nn.CosineDistance()
 
+local all_case_counter = 0
+local here_cos_1 = 0
+local here_cos_2 = 0
+local here_cos_3 = 0
+
+local here_diff_1 = 0
+local here_diff_2 = 0
+local here_diff_3 = 0
+
+
 local function ExtractFeatures(dataTable, negativeSamplingThreshold, emtpyCosinePenalty)
   local firstFeaturesTensor = torch.FloatTensor(opt.numTableFields,opt.embeddingSize)
   local secondFeaturesTensor = torch.FloatTensor(opt.numTableFields,opt.embeddingSize)
@@ -246,51 +256,59 @@ local function ExtractFeatures(dataTable, negativeSamplingThreshold, emtpyCosine
   local included = torch.Tensor(dataTensor:size()[1])
   local numIncluded = 0
   for i = 1, #dataTable do
+    all_case_counter = all_case_counter + 1
     xlua.progress(i,#dataTable)
     for j=1, opt.numTableFields do
       firstFeaturesTensor:zero()
       secondFeaturesTensor:zero()
       local sentence1 = dataTable[i][1][j]
-      local numWordsInSentences = 0
+      local numWordsInSentences_1 = 0
       for word in sentence1:gmatch("%w+") do --TODO: very naive to break on white space only
         firstFeaturesTensor[j]:add(word2vec:word2vec(word))
-        numWordsInSentences = numWordsInSentences + 1
+        numWordsInSentences_1 = numWordsInSentences_1 + 1
       end
-      firstFeaturesTensor[j]:div(numWordsInSentences)
+      firstFeaturesTensor[j]:div(numWordsInSentences_1)
 
       local sentence2 = dataTable[i][2][j]
       
       
-      numWordsInSentences = 0
+      local numWordsInSentences_2 = 0
       for word in sentence2:gmatch("%w+") do --TODO: very naive to break on white space only, use porter or something more advanced
         secondFeaturesTensor[j]:add(word2vec:word2vec(word))
-        numWordsInSentences = numWordsInSentences + 1
+        numWordsInSentences_2 = numWordsInSentences_2 + 1
       end
-      secondFeaturesTensor[j]:div(numWordsInSentences)
+      secondFeaturesTensor[j]:div(numWordsInSentences_2)
+
       local dist = cosine:forward{firstFeaturesTensor[j],secondFeaturesTensor[j]}
 
       --local diff = torch.norm((firstFeaturesTensor[j] - secondFeaturesTensor[j]),2)
       local diff = nn.Abs()(firstFeaturesTensor[j] - secondFeaturesTensor[j])
       diff = torch.norm(diff)
       if dist[1]~=dist[1] then  --cosine is NaN
-        if string.len(sentence1) == 0 and string.len(sentence2) == 0 then
+        if sentence1=="" and sentence2 =="" then
+          here_cos_1 = here_cos_1 + 1
           dist = 1
-        elseif (string.len(sentence1) == 0 and string.len(sentence2) < 3) or (string.len(sentence1) < 3 and string.len(sentence2) == 0) then
-          dist = 1
-        else
+        elseif sentence1~="" and sentence2 =="" then 
+          here_cos_2 = here_cos_2 + 1
+          dist = emtpyCosinePenalty
+        elseif sentence1=="" and sentence2 ~="" then
+          here_cos_3 = here_cos_3 + 1
           dist = emtpyCosinePenalty  -- cosine is NaN, so assigning worst value from a cosine similarity point of view
         end
       end  
 
       if diff~=diff then  --diff is NaN, this is mostly due to a mising attribute(sentence)
-        if string.len(sentence1) == 0 and string.len(sentence2) == 0 then
+        if sentence1=="" and sentence2 =="" then
+          here_diff_1 = here_diff_1 + 1
           diff = 0
         elseif sentence1~="" and sentence2 =="" then 
+          here_diff_2 = here_diff_2 + 1
           diff = torch.norm(firstFeaturesTensor[j])
-          diff = diff / string.len(sentence1)
+          diff = diff / numWordsInSentences_1
         elseif sentence1=="" and sentence2 ~="" then
+          here_diff_3 = here_diff_3 + 1
           diff = torch.norm(secondFeaturesTensor[j])
-          diff = diff / string.len(sentence2)
+          diff = diff / numWordsInSentences_2
         end
       end
 
@@ -304,7 +322,7 @@ local function ExtractFeatures(dataTable, negativeSamplingThreshold, emtpyCosine
      end
    end
    
-   if dataTensor[ {{i},{1,4} } ]:mean() < negativeSamplingThreshold then
+   if dataTensor[ {{i},{1,4} } ]:mean() <= negativeSamplingThreshold then
     included[i] = 0
    else
     included[i] = 1
@@ -408,7 +426,7 @@ if opt.computeFeatures == 'yes' then --   not paths.filep(opt.positivePairsTrain
     negativePairsTrainingTable = FillDataTable(negativePairsTraining, firstDataTable, secondDataTable)
     print('Extracting Features from Train Data Tables ...')
     positiveTrainingTensor = ExtractFeatures(positivePairsTrainingTable,-1,opt.empty_cosine_penalty) -- -1 as we never drop positives, 0 as we lightly penalize empty positives
-    negativeTrainingTensorFull, negativeTrainingIncluded, numNegativeTrainingIncluded = ExtractFeatures(negativePairsTrainingTable, opt.threshold,-1)
+    negativeTrainingTensorFull, negativeTrainingIncluded, numNegativeTrainingIncluded = ExtractFeatures(negativePairsTrainingTable, opt.threshold,opt.empty_cosine_penalty)
     print('Filtering Train Tensors by Cosine Similarity Threshold of: ' .. opt.threshold)
     negativeTrainingTensor = torch.Tensor(numNegativeTrainingIncluded, negativeTrainingTensorFull:size()[2])
     local negativeCounter = 0
@@ -428,7 +446,7 @@ if opt.computeFeatures == 'yes' then --   not paths.filep(opt.positivePairsTrain
     negativePairsDevTable = FillDataTable(negativePairsDev, firstDataTable, secondDataTable)
     print('Extracting Features from Dev Data Tables ...')
     positiveDevTensor = ExtractFeatures(positivePairsDevTable,-1,opt.empty_cosine_penalty)
-    negativeDevTensorFull, negativeDevIncluded, numNegativeDevIncluded = ExtractFeatures(negativePairsDevTable, opt.threshold,-1)
+    negativeDevTensorFull, negativeDevIncluded, numNegativeDevIncluded = ExtractFeatures(negativePairsDevTable, opt.threshold,opt.empty_cosine_penalty)
     print('Filtering Dev Tensors by Cosine Similarity Threshold of: ' .. opt.threshold)
     negativeDevTensor = torch.Tensor(numNegativeDevIncluded, negativeDevTensorFull:size()[2])
     negativeCounter = 0
@@ -459,7 +477,7 @@ if opt.computeFeatures == 'yes' then --   not paths.filep(opt.positivePairsTrain
   local negativePairsTestingTable = FillDataTable(negativePairsTesting, firstDataTable, secondDataTable,testIndexToIdTable, 1+#positivePairsTesting)
   print('Extracting Features from Test Data Tables ...')
   positiveTestingTensor = ExtractFeatures(positivePairsTestingTable,-1,opt.empty_cosine_penalty)
-  negativeTestingTensorFull, negativeTestingIncluded, numNegativeTestingIncluded = ExtractFeatures(negativePairsTestingTable, opt.threshold,-1)
+  negativeTestingTensorFull, negativeTestingIncluded, numNegativeTestingIncluded = ExtractFeatures(negativePairsTestingTable, opt.threshold,opt.empty_cosine_penalty)
   print('Filtering Test Tensors by Cosine Similarity Threshold of: ' .. opt.threshold)
   negativeTestingTensor = torch.Tensor(numNegativeTestingIncluded, negativeTestingTensorFull:size()[2])
   negativeCounter = 0
@@ -808,6 +826,16 @@ local function evaluate(data, model, is_dev)
         else
           label = 2
         end
+        
+
+
+        -- print(testIndexToIdTable[t])
+        -- print(input)
+        -- print(pred)
+        -- print(label)
+
+        
+
         table.insert(test_predictions, {testIndexToIdTable[t], label})  
         if pred[1] > pred[2] and target == 2 then
           table.insert(falsePositives,testIndexToIdTable[t])
@@ -917,7 +945,18 @@ perf_file:close()
 
 
 local threshold_file = torch.DiskFile(opt.threshold_file_path, 'w')
-print(opt.threshold)
+print('opt.threshold ' .. opt.threshold)
+print('all_case_counter ' .. all_case_counter)
+
+print('here_cos_1 ' .. here_cos_1)
+print('here_cos_2 ' .. here_cos_2)
+print('here_cos_3 ' .. here_cos_3)
+
+print('here_diff_1 ' .. here_diff_1)
+print('here_diff_2 ' .. here_diff_2)
+print('here_diff_3 ' .. here_diff_3)
+
+
 threshold_file:writeFloat(opt.threshold)
 threshold_file:close()
 
