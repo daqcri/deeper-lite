@@ -12,4 +12,9 @@ then run the install.sh to install
 
 2) torch and the required rocks
 
+3) download and extract glove
+
+
+The first time things run will of course take a while - unless you have the t7 glove file saved
+
 
