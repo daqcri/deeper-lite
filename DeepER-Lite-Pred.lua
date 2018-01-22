@@ -31,6 +31,7 @@ cmd:option('-save', '', 'subdirectory to save/log experiments in')
 cmd:option('-type', 'float', 'type: double | float | cuda')
 cmd:option('-simMeasure', '', 'cosineDiff | diff | cosineDiff')
 cmd:option('-threshold_file_path','' , 'save path to the negative drop threshold')
+cmd:option('-empty_cosine_penalty','0' , 'Empty Cosine Penalty')
 cmd:option('-computeFeatures', '', 'recompute features anew do not load from saved yes | no')
 
 cmd:text()
@@ -41,6 +42,8 @@ opt.threshold = threshold_file:readFloat()
 threshold_file:close()
 
 print(opt)
+
+torch.setdefaulttensortype('torch.FloatTensor')
 
 if opt.type == 'float' then
    print('==> switching to floats')
@@ -111,7 +114,7 @@ local function ExtractFeatures(dataTable, negativeSamplingThreshold, emtpyCosine
   local included = torch.Tensor(dataTensor:size()[1])
   local numIncluded = 0
   for i = 1, #dataTable do
-    xlua.progress(i, #dataTable)
+    xlua.progress(i,#dataTable)
     for j=1, opt.numTableFields do
       firstFeaturesTensor:zero()
       secondFeaturesTensor:zero()
@@ -122,6 +125,7 @@ local function ExtractFeatures(dataTable, negativeSamplingThreshold, emtpyCosine
         numWordsInSentences = numWordsInSentences + 1
       end
       firstFeaturesTensor[j]:div(numWordsInSentences)
+
       local sentence2 = dataTable[i][2][j]
       
       
@@ -131,7 +135,6 @@ local function ExtractFeatures(dataTable, negativeSamplingThreshold, emtpyCosine
         numWordsInSentences = numWordsInSentences + 1
       end
       secondFeaturesTensor[j]:div(numWordsInSentences)
-
       local dist = cosine:forward{firstFeaturesTensor[j],secondFeaturesTensor[j]}
 
       --local diff = torch.norm((firstFeaturesTensor[j] - secondFeaturesTensor[j]),2)
@@ -253,7 +256,7 @@ if opt.computeFeatures == 'yes' then --   not paths.filep(opt.positivePairsTrain
   print("Extracting Features from Data Table ...")
   sys.tic()
 
-  predTensorFull,included, numIncluded = ExtractFeatures(predPairsTable, opt.threshold,-1)
+  predTensorFull,included, numIncluded = ExtractFeatures(predPairsTable, opt.threshold,opt.empty_cosine_penalty)
   
   t = sys.toc()
   print("Extracting Features from Data Table took: " .. t .."seconds\n")
@@ -321,17 +324,15 @@ local function evaluate(data, model, is_dev)
    for t = 1,data:size() do
       xlua.progress(t, data:size())
       local input = data.data[t]
-      
-      -- if opt.type == 'double' then input = input:double()
-      -- elseif opt.type == 'float' then input = input:float()
-      -- elseif opt.type == 'cuda' then input = input:cuda() end
-      
+      if opt.type == 'double' then input = input:double()
+      elseif opt.type == 'cuda' then input = input:cuda() end
       local pred = model:forward(input)
       if pred[1] > pred[2] then
         label = 1
       else
         label = 2
       end
+
       table.insert(test_predictions, {predIndexToTable[t], label})  
    end
    time = sys.clock() - time
@@ -343,9 +344,6 @@ end
 local best_dev_model_file_path = paths.concat(opt.save, 'best_dev_model.net') 
 best_dev_model = torch.load(best_dev_model_file_path)
 
-if opt.type == 'cuda' then
-   best_dev_model:cuda()
-end
 
 local test_p, test_r, test_f1, test_confusion = evaluate(predData, best_dev_model, false)
 
@@ -355,6 +353,7 @@ for k,v in ipairs(test_predictions) do
     count_matches = count_matches + 1
     test_predictions_file:writeString(v[1][1]  .. ','  .. v[1][2] ..'\n')
   end
+
 end
 
 test_predictions_file:close()
