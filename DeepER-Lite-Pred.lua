@@ -98,6 +98,15 @@ end
 
 local cosine = nn.CosineDistance()
 
+local all_case_counter = 0
+local here_cos_1 = 0
+local here_cos_2 = 0
+local here_cos_3 = 0
+
+local here_diff_1 = 0
+local here_diff_2 = 0
+local here_diff_3 = 0
+
 local function ExtractFeatures(dataTable, negativeSamplingThreshold, emtpyCosinePenalty)
   local firstFeaturesTensor = torch.FloatTensor(opt.numTableFields,opt.embeddingSize)
   local secondFeaturesTensor = torch.FloatTensor(opt.numTableFields,opt.embeddingSize)
@@ -114,51 +123,59 @@ local function ExtractFeatures(dataTable, negativeSamplingThreshold, emtpyCosine
   local included = torch.Tensor(dataTensor:size()[1])
   local numIncluded = 0
   for i = 1, #dataTable do
+    all_case_counter = all_case_counter + 1
     xlua.progress(i,#dataTable)
     for j=1, opt.numTableFields do
       firstFeaturesTensor:zero()
       secondFeaturesTensor:zero()
       local sentence1 = dataTable[i][1][j]
-      local numWordsInSentences = 0
+      local numWordsInSentences_1 = 0
       for word in sentence1:gmatch("%w+") do --TODO: very naive to break on white space only
         firstFeaturesTensor[j]:add(word2vec:word2vec(word))
-        numWordsInSentences = numWordsInSentences + 1
+        numWordsInSentences_1 = numWordsInSentences_1 + 1
       end
-      firstFeaturesTensor[j]:div(numWordsInSentences)
+      firstFeaturesTensor[j]:div(numWordsInSentences_1)
 
       local sentence2 = dataTable[i][2][j]
       
       
-      numWordsInSentences = 0
+      local numWordsInSentences_2 = 0
       for word in sentence2:gmatch("%w+") do --TODO: very naive to break on white space only, use porter or something more advanced
         secondFeaturesTensor[j]:add(word2vec:word2vec(word))
-        numWordsInSentences = numWordsInSentences + 1
+        numWordsInSentences_2 = numWordsInSentences_2 + 1
       end
-      secondFeaturesTensor[j]:div(numWordsInSentences)
+      secondFeaturesTensor[j]:div(numWordsInSentences_2)
+
       local dist = cosine:forward{firstFeaturesTensor[j],secondFeaturesTensor[j]}
 
       --local diff = torch.norm((firstFeaturesTensor[j] - secondFeaturesTensor[j]),2)
       local diff = nn.Abs()(firstFeaturesTensor[j] - secondFeaturesTensor[j])
       diff = torch.norm(diff)
       if dist[1]~=dist[1] then  --cosine is NaN
-        if string.len(sentence1) == 0 and string.len(sentence2) == 0 then
+        if sentence1=="" and sentence2 =="" then
+          here_cos_1 = here_cos_1 + 1
           dist = 1
-        elseif (string.len(sentence1) == 0 and string.len(sentence2) < 3) or (string.len(sentence1) < 3 and string.len(sentence2) == 0) then
-          dist = 1
-        else
+        elseif sentence1~="" and sentence2 =="" then 
+          here_cos_2 = here_cos_2 + 1
+          dist = emtpyCosinePenalty
+        elseif sentence1=="" and sentence2 ~="" then
+          here_cos_3 = here_cos_3 + 1
           dist = emtpyCosinePenalty  -- cosine is NaN, so assigning worst value from a cosine similarity point of view
         end
       end  
 
       if diff~=diff then  --diff is NaN, this is mostly due to a mising attribute(sentence)
-        if string.len(sentence1) == 0 and string.len(sentence2) == 0 then
+        if sentence1=="" and sentence2 =="" then
+          here_diff_1 = here_diff_1 + 1
           diff = 0
         elseif sentence1~="" and sentence2 =="" then 
+          here_diff_2 = here_diff_2 + 1
           diff = torch.norm(firstFeaturesTensor[j])
-          diff = diff / string.len(sentence1)
+          diff = diff / numWordsInSentences_1
         elseif sentence1=="" and sentence2 ~="" then
+          here_diff_3 = here_diff_3 + 1
           diff = torch.norm(secondFeaturesTensor[j])
-          diff = diff / string.len(sentence2)
+          diff = diff / numWordsInSentences_2
         end
       end
 
@@ -172,7 +189,7 @@ local function ExtractFeatures(dataTable, negativeSamplingThreshold, emtpyCosine
      end
    end
    
-   if dataTensor[ {{i},{1,4} } ]:mean() < negativeSamplingThreshold then
+   if dataTensor[ {{i},{1,4} } ]:mean() <= negativeSamplingThreshold then
     included[i] = 0
    else
     included[i] = 1
@@ -332,6 +349,11 @@ local function evaluate(data, model, is_dev)
       else
         label = 2
       end
+      
+      -- print(predIndexToTable[t])
+      -- print(input)
+      -- print(pred)
+      -- print(label)
 
       table.insert(test_predictions, {predIndexToTable[t], label})  
    end
@@ -351,12 +373,23 @@ local count_matches = 0
 for k,v in ipairs(test_predictions) do
   if v[2] == 1 then
     count_matches = count_matches + 1
-    test_predictions_file:writeString(v[1][1]  .. ','  .. v[1][2] ..'\n')
+    test_predictions_file:writeString('\"' .. v[1][1]  .. '\",'  .. '\"' .. v[1][2] .. '\"' ..'\n')
   end
 
 end
 
 test_predictions_file:close()
+
+print('all_case_counter ' .. all_case_counter)
+
+print('here_cos_1 ' .. here_cos_1)
+print('here_cos_2 ' .. here_cos_2)
+print('here_cos_3 ' .. here_cos_3)
+
+print('here_diff_1 ' .. here_diff_1)
+print('here_diff_2 ' .. here_diff_2)
+print('here_diff_3 ' .. here_diff_3)
+
 total_time = sys.clock() - total_time
 print("\n==> Total time = " .. (total_time) .. ' seconds, predicted: ' .. (predData:size()) .. ' pairs\n' )
 print("(" .. count_matches .. ")".. " MATCHES FOUND\n")
