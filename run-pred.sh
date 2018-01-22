@@ -56,8 +56,7 @@ for (( c=$START; c<=$END; c++ ))
 do
 	echo ${PRED_FILE%.*}_$c.csv
 	echo $OUTOUT_DIR/predictions_$c.txt
-	# th DeepER-Lite-Pred.lua -predPairsFile  ${PRED_FILE_PATH%.*}_$c.csv \
-	th DeepER-Lite-Pred.lua -predPairsFile  /home/me/Code/DeepER-Lite/data/Amazon-GoogleProducts/Amazon-GoogleProducts_Testing.csv \
+	th DeepER-Lite-Pred.lua -predPairsFile  ${PRED_FILE_PATH%.*}_$c.csv \
 				  	 -predPairsFileBin ${PRED_FILE_PATH%.*}_$c.csv'.t7' \
 				  	 -predMapFileBin  $OUTOUT_DIR/predMap.t7 \
 				  	 -predictions_file_path $OUTOUT_DIR/predictions_$c.csv \
