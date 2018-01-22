@@ -59,7 +59,7 @@ for i in range(num_parallels-1):
 
 for i in range(num_parallels):
 	product_file = open(os.path.splitext(args.pred_file)[0] + "_" + str(i) + ".csv",'w')
-	writer = csv.writer(product_file)
+	writer = csv.writer(product_file, lineterminator='\n')
 	for j in range(start_indices[i],end_indices[i]):
 	    if counter < num_pairs:
 	    	writer.writerow(pairs[j])
