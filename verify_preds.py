@@ -10,6 +10,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--preds_dir_path')
 parser.add_argument('--all_preds_file_path')
 parser.add_argument('--perfect_file_path')
+parser.add_argument('--is_paranthesized')
 
 args = parser.parse_args()
 
@@ -17,6 +18,8 @@ pred_file_counter = 0
 for file in os.listdir(args.preds_dir_path):
 	if file.endswith(".csv"):
 		pred_lines = open(os.path.join(args.preds_dir_path, file),'r').read().split('\n')
+		if args.is_paranthesized == 'no':
+			pred_lines = [line.replace('"', '') for line in pred_lines]
 		if (pred_file_counter == 0):
 			pred_ids = set(pred_lines)
 		else:
