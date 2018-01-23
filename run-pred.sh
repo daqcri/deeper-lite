@@ -6,7 +6,7 @@ if [ $# -lt 8 ]; then
 	echo " "
 	echo "Run this from DeepER-Lite root only"
 	echo " "
-	echo "e.g. bash run-pred.sh Amazon-GoogleProducts Amazon GoogleProducts pairs_to_predict 1000 1"
+	echo "e.g. bash run-pred.sh fodors-zagats fodors zagats 6 pairs_to_predict -1 1 yes"
 	echo " "
 	exit 1
 fi
